@@ -1,0 +1,21 @@
+<div id="testimonial-frame-wrapper" style="width:100%; overflow:visible;">
+  <iframe
+    id="testimonialFrame"
+    src="https://dean-atv.github.io/testimonial-plugins/home-page.html"
+    style="width:100%; border:0; overflow:hidden; min-height:900px;"
+    scrolling="no"
+    allow="autoplay; fullscreen"
+  ></iframe>
+</div>
+
+<script>
+window.addEventListener("message", (event) => {
+  if (event.data?.type === "resize-testimonials") {
+    const iframe = document.getElementById("testimonialFrame");
+    const newHeight = Number(event.data.height) || 1200;
+
+    iframe.style.height = newHeight + "px";
+    iframe.style.minHeight = newHeight + "px";
+  }
+});
+</script>
