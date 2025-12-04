@@ -1,14 +1,14 @@
 <iframe 
-  src="https://cdn.jsdelivr.net/gh/dean-atv/testimonial-plugins@latest/home-page.html"
-  style="width:100%;border:0;overflow:hidden;"
   id="atv-testimonials"
+  src="https://rawcdn.githack.com/dean-atv/testimonial-plugins/main/home-page.html"
+  style="width:100%; border:0; overflow:hidden;"
 ></iframe>
 
 <script>
 window.addEventListener("message", (event) => {
-  if (event.data?.type === "resize-testimonials") {
-    document.getElementById("atv-testimonials").style.height =
-      event.data.height + "px";
+  if (event.data?.type === "adjustertv-resize") {
+    const iframe = document.getElementById("atv-testimonials");
+    iframe.style.height = event.data.height + "px";
   }
 });
 </script>
