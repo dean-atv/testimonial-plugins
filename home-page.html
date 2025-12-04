@@ -228,14 +228,22 @@
     sendHeight();
   }
 
+  /* MOST RELIABLE HEIGHT CALC */
   function sendHeight() {
     const height = document.documentElement.scrollHeight;
     parent.postMessage({ type: "resize-testimonials", height }, "*");
   }
 
-  new MutationObserver(sendHeight).observe(document.body, { childList: true, subtree: true });
+  /* Recalculate on layout / column change */
+  window.addEventListener("resize", () => {
+    setTimeout(sendHeight, 150);
+  });
+
+  new MutationObserver(() => {
+    setTimeout(sendHeight, 100);
+  }).observe(document.body, { childList: true, subtree: true });
+
   window.addEventListener("load", sendHeight);
-  window.addEventListener("resize", sendHeight);
 
   fetchTestimonials();
 </script>
