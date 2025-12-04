@@ -1,55 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AdjusterTV Testimonials Widget – Sales Page</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  #testimonials {
+    column-count: 1;
+    column-gap: 1.25em;
+    padding: 1.5em;
+  }
+  @media (min-width: 768px) { #testimonials { column-count: 2; } }
+  @media (min-width: 1024px){ #testimonials { column-count: 3; } }
+
+  .testimonial-card {
+    break-inside: avoid;
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 1.75em;
+    margin-bottom: 1.25em;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  }
+
+  .testimonial-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #fcf0e8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 1em;
+  }
+  .testimonial-avatar img {
+    width: 100%; height: 100%;
+    border-radius: 50%; object-fit: cover;
+  }
+
+  .testimonial-content h4 {
+    margin: 0 0 .4em;
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+
+  .testimonial-content p {
+    margin: .6em 0;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .author {
+    font-style: italic;
+    font-size: .9rem;
+    color: #666;
+  }
+
+  .thumbnail {
+    position: relative;
+    cursor: pointer;
+    margin-bottom: 1em;
+  }
+  .thumbnail img { width: 100%; border-radius: 6px; }
+
+  .play-btn {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border-radius: 50%;
+    padding: .3em .5em;
+    font-size: 1.5em;
+    pointer-events: none;
+  }
+
+  .pagination {
+    text-align: center;
+    margin: 2em 0;
+  }
+  .pagination button {
+    padding: .5em 1em;
+    margin: 0 .25em;
+    border: 1px solid #ccc;
+    background: #eee;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .pagination button.active {
+    background: #dc7518;
+    color: #fff;
+  }
+
+  .mux-lightbox {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 9999;
+  }
+  .mux-player-wrap {
+    width: 90%; max-width: 800px; aspect-ratio: 16 / 9;
+  }
+  .mux-lightbox iframe {
+    width: 100%; height: 100%; border-radius: 8px; border: none;
+  }
+</style>
+</head>
+
+<body>
+  <div id="testimonials"></div>
+  <div id="pagination" class="pagination"></div>
+
 <script>
-  const apiUrl   = "https://x8ki-letl-twmt.n7.xano.io/api:adb96NHP/testimonials";
-  const perPage  = 6;
-  const cacheKey = 'testimonialsData';
-  const cacheTtl = 1000 * 60 * 10; // ten minutes
-  let currentPage  = 1;
+  const apiUrl  = "https://x8ki-letl-twmt.n7.xano.io/api:adb96NHP/testimonials";
+  const perPage = 6;
+  const reviewCount = 176; // centralized review number
   let testimonials = [];
-
-  function sendHeight() {
-    const height = document.documentElement.scrollHeight;
-    parent.postMessage({ type: "resize-testimonials", height }, "*");
-  }
-
-  async function fetchWithCache() {
-    const raw = localStorage.getItem(cacheKey);
-    if (raw) {
-      try {
-        const { ts, data } = JSON.parse(raw);
-        if (Date.now() - ts < cacheTtl) return data;
-      } catch {}
-    }
-    const res  = await fetch(apiUrl);
-    const data = await res.json();
-    localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
-    return data;
-  }
+  let currentPage = 1;
 
   async function fetchTestimonials() {
-    const data = await fetchWithCache();
-    if (!Array.isArray(data) || !data.length) {
-      document.getElementById("testimonials").innerHTML = "<p>No testimonials found.</p>";
-      sendHeight();
-      return;
-    }
+    const res = await fetch(apiUrl);
+    const data = await res.json();
 
-    testimonials = data
+    testimonials = (Array.isArray(data) ? data : [])
       .filter(e => e.published && e.sales_page_feature)
-      .sort((a,b) => (parseFloat(b.Rating)||7) - (parseFloat(a.Rating)||0));
+      .sort((a, b) => (parseFloat(b.Rating)||7) - (parseFloat(a.Rating)||0));
 
     renderPagination();
     renderPage();
+    sendHeight();
   }
 
   function renderPage() {
     const container = document.getElementById("testimonials");
     const start = (currentPage - 1) * perPage;
-    const items = testimonials.slice(start, start + perPage);
+    container.innerHTML = testimonials.slice(start, start + perPage).map(renderItem).join("");
+    sendHeight();
+  }
 
-    container.innerHTML = items.map(renderItem).join("");
+  function renderItem(e) {
+    const avatar = e.photo
+      ? `<img src="${e.photo}" class="testimonial-avatar">`
+      : `<div class="testimonial-avatar">${(e.student_name||"?").charAt(0)}</div>`;
 
-    // **** CRITICAL: resize when page changes ****
-    setTimeout(sendHeight, 50);
+    const video = e.mux_video_id && e.mux_thumbnail
+      ? `<div class="thumbnail" onclick="openMuxLightbox('${e.mux_video_id}')">
+          <img src="${e.mux_thumbnail}" loading="lazy">
+          <button class="play-btn">▶</button>
+         </div>`
+      : "";
+
+    return `
+      <div class="testimonial-card">
+        ${avatar}
+        ${video}
+        <div class="testimonial-content">
+          ${e.heading ? `<h4>${e.heading}</h4>` : ""}
+          ${e.body ? `<p>${e.body}</p>` : ""}
+          ${e.student_name ? `<p class="author">– ${e.student_name}</p>` : ""}
+        </div>
+      </div>
+    `;
   }
 
   function renderPagination() {
@@ -69,42 +193,15 @@
         };
         pag.append(btn);
       }
+
       if (i === 2 && totalPages > 2) {
         const all = document.createElement("button");
-        all.textContent = `See All Reviews (176)`;
-        all.onclick = () =>
-          window.location.href = "https://www.adjustertv.com/reviews";
+        all.textContent = `See All Reviews (${reviewCount})`;
+        all.onclick = () => window.open("https://www.adjustertv.com/reviews", "_blank");
         pag.append(all);
         break;
       }
     }
-
-    // resize after pagination is re-rendered
-    setTimeout(sendHeight, 50);
-  }
-
-  function renderItem(e) {
-    const avatar = e.photo
-      ? `<img src="${e.photo}" class="testimonial-avatar">`
-      : `<div class="testimonial-avatar">${(e.student_name||"?").charAt(0)}</div>`;
-
-    const video = (e.mux_video_id && e.mux_thumbnail)
-      ? `<div class="thumbnail" onclick="openMuxLightbox('${e.mux_video_id}')">
-           <img src="${e.mux_thumbnail}" loading="lazy">
-           <button class="play-btn">▶</button>
-         </div>`
-      : "";
-
-    return `
-      <div class="testimonial-card">
-        ${avatar}
-        ${video}
-        <div class="testimonial-content">
-          ${e.heading ? `<h4>${e.heading}</h4>` : ""}
-          ${e.body ? `<p>${e.body}</p>` : ""}
-          ${e.student_name ? `<p class="author">– ${e.student_name}</p>` : ""}
-        </div>
-      </div>`;
   }
 
   function openMuxLightbox(id) {
@@ -112,26 +209,23 @@
     lb.className = "mux-lightbox";
     lb.innerHTML = `
       <div class="mux-player-wrap">
-        <iframe
-          src="https://stream.mux.com/${id}?autoplay=1"
-          allow="autoplay; fullscreen"
-          frameborder="0"
-          allowfullscreen>
-        </iframe>
+        <iframe src="https://stream.mux.com/${id}?autoplay=1" allow="autoplay; fullscreen"></iframe>
       </div>`;
-    lb.onclick = () => {
-      lb.remove();
-      sendHeight();
-    };
+    lb.onclick = () => lb.remove();
     document.body.append(lb);
-    sendHeight();
   }
 
-  // safety redundancies
+  function sendHeight() {
+    const height = document.documentElement.scrollHeight;
+    parent.postMessage({ type: "resize-testimonials", height }, "*");
+  }
+
+  new MutationObserver(sendHeight).observe(document.body, { childList: true, subtree: true });
   window.addEventListener("load", sendHeight);
   window.addEventListener("resize", sendHeight);
-  new MutationObserver(() => sendHeight())
-    .observe(document.body, { childList: true, subtree: true });
 
-  document.addEventListener("DOMContentLoaded", fetchTestimonials);
+  fetchTestimonials();
 </script>
+
+</body>
+</html>
