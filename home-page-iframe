@@ -1,14 +1,14 @@
-<iframe 
-  id="atv-testimonials"
+<iframe
   src="https://rawcdn.githack.com/dean-atv/testimonial-plugins/main/home-page.html"
   style="width:100%; border:0; overflow:hidden;"
+  id="home-testimonials"
 ></iframe>
 
 <script>
-window.addEventListener("message", (event) => {
-  if (event.data?.type === "adjustertv-resize") {
-    const iframe = document.getElementById("atv-testimonials");
-    iframe.style.height = event.data.height + "px";
+window.addEventListener("message", function(event) {
+  if (event.data?.type === "resize-testimonials") {
+    const iframe = document.getElementById("home-testimonials");
+    if (iframe) iframe.style.height = event.data.height + "px";
   }
 });
 </script>
