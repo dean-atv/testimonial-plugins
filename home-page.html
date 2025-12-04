@@ -213,14 +213,17 @@
       </div>`;
   }
 
+  // FIXED: correct Mux embed URL
   function openMuxLightbox(id) {
     const lb = document.createElement("div");
     lb.className = "mux-lightbox";
     lb.innerHTML = `
       <div class="mux-player-wrap">
         <iframe
-          src="https://stream.mux.com/${id}?autoplay=1"
-          frameborder="0" allow="autoplay; fullscreen" allowfullscreen>
+          src="https://stream.mux.com/${id}/embed.html?autoplay=1"
+          frameborder="0"
+          allow="autoplay; fullscreen"
+          allowfullscreen>
         </iframe>
       </div>`;
     lb.onclick = () => lb.remove();
@@ -228,22 +231,14 @@
     sendHeight();
   }
 
-  /* MOST RELIABLE HEIGHT CALC */
   function sendHeight() {
     const height = document.documentElement.scrollHeight;
     parent.postMessage({ type: "resize-testimonials", height }, "*");
   }
 
-  /* Recalculate on layout / column change */
-  window.addEventListener("resize", () => {
-    setTimeout(sendHeight, 150);
-  });
-
-  new MutationObserver(() => {
-    setTimeout(sendHeight, 100);
-  }).observe(document.body, { childList: true, subtree: true });
-
+  new MutationObserver(sendHeight).observe(document.body, { childList: true, subtree: true });
   window.addEventListener("load", sendHeight);
+  window.addEventListener("resize", sendHeight);
 
   fetchTestimonials();
 </script>
