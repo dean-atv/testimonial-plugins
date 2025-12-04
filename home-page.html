@@ -179,7 +179,7 @@
     document.getElementById("testimonials").innerHTML =
       testimonials.map(renderItem).join("");
 
-    autoResize();
+    sendHeight();
   }
 
   function renderItem(e) {
@@ -225,17 +225,20 @@
       </div>`;
     lb.onclick = () => lb.remove();
     document.body.append(lb);
+    sendHeight();
   }
 
-  function autoResize() {
-    const height = document.body.scrollHeight;
-    parent.postMessage({ type: "adjustertv-testimonials-height", height }, "*");
+  function sendHeight() {
+    const height = document.documentElement.scrollHeight;
+    parent.postMessage({ type: "resize-testimonials", height }, "*");
   }
 
-  new ResizeObserver(autoResize).observe(document.body);
-  window.addEventListener("load", autoResize);
+  new MutationObserver(sendHeight).observe(document.body, { childList: true, subtree: true });
+  window.addEventListener("load", sendHeight);
+  window.addEventListener("resize", sendHeight);
 
   fetchTestimonials();
 </script>
+
 </body>
 </html>
