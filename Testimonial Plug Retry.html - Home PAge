@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+
+<!-- Roboto font -->
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  /*============================
+    MUX LIGHTBOX
+  ============================*/
+  .mux-lightbox {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mux-lightbox.active {
+    display: flex;
+  }
+
+  .mux-player-wrap iframe {
+    width: 90vw;
+    height: 50vw;
+    max-width: 900px;
+    max-height: 500px;
+    border-radius: 8px;
+    background: #000;
+  }
+
+  .mux-player-wrap {
+    position: relative !important;
+    pointer-events: auto !important;
+    margin: 0 auto;
+  }
+
+  /*============================
+    TESTIMONIALS
+  ============================*/
+  .testimonial-section #testimonials {
+    column-count: 1;
+    column-gap: 1.25em;
+    padding: 1.5em;
+    background: transparent;
+  }
+  @media (min-width: 768px) { .testimonial-section #testimonials { column-count: 2; } }
+  @media (min-width: 1024px){ .testimonial-section #testimonials { column-count: 3; } }
+
+  .testimonial-card {
+    break-inside: avoid;
+    background: #fffefc;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 1.75em;
+    margin-bottom: 1.25em;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    color: #222;
+  }
+
+  .testimonial-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #dc7518;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+    margin-bottom: 1em;
+  }
+
+  .testimonial-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .testimonial-content h4 {
+    margin: 0 0 .4em;
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #111;
+  }
+
+  .testimonial-content p {
+    margin: .6em 0;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  .author {
+    font-style: italic;
+    font-size: .9rem;
+    color: #666;
+  }
+
+  .thumbnail {
+    position: relative;
+    cursor: pointer;
+    margin-bottom: 1em;
+  }
+
+  .thumbnail img {
+    width: 100%;
+    border-radius: 6px;
+  }
+
+  .play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    font-size: 1.5em;
+    border-radius: 50%;
+    padding: .3em .5em;
+    pointer-events: none;
+  }
+
+  .see-all-wrap {
+    text-align: center;
+    margin-top: 2.5em;
+  }
+
+  .see-all-button {
+    background: #dc7518;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.75em 1.5em;
+    border-radius: 6px;
+    display: inline-block;
+  }
+</style>
+
+</head>
+<body>
+
+<!-- MUX LIGHTBOX -->
+<div id="mux-lightbox" class="mux-lightbox" onclick="closeMuxLightbox()">
+  <div class="mux-player-wrap" onclick="event.stopPropagation()">
+    <iframe id="mux-iframe" allow="autoplay; fullscreen" allowfullscreen frameborder="0"></iframe>
+  </div>
+</div>
+
+<!-- TESTIMONIALS -->
+<div class="testimonial-section">
+  <div id="testimonials"></div>
+  <div class="see-all-wrap">
+    <a href="https://www.fasttracktodeployment.com/reviews"
+       class="see-all-button"
+       target="_blank" rel="noopener noreferrer">See All Reviews</a>
+  </div>
+</div>
+
+<script>
+  /*============================
+    MUX LIGHTBOX FUNCTIONS
+  ============================*/
+  function openMuxLightbox(playbackId) {
+    const lb = document.getElementById("mux-lightbox");
+    const iframe = document.getElementById("mux-iframe");
+    iframe.src = `https://player.mux.com/${playbackId}?autoplay=true&muted=false`;
+    lb.classList.add("active");
+  }
+
+  function closeMuxLightbox() {
+    const lb = document.getElementById("mux-lightbox");
+    const iframe = document.getElementById("mux-iframe");
+    lb.classList.remove("active");
+    iframe.src = "";
+  }
+
+  /*============================
+    TESTIMONIAL FETCHER
+  ============================*/
+  const apiUrl = "https://x8ki-letl-twmt.n7.xano.io/api:adb96NHP/testimonials";
+  const perPage = 6;
+
+  async function fetchTestimonials() {
+    const res = await fetch(apiUrl);
+    const data = await res.json();
+
+    const testimonials = (Array.isArray(data) ? data : [])
+      .filter(e => e.published && e.home_page_feature)
+      .sort((a, b) => (parseFloat(b.Rating) || 7) - (parseFloat(a.Rating) || 0))
+      .slice(0, perPage);
+
+    renderTestimonials(testimonials);
+  }
+
+  function renderTestimonials(items) {
+    const container = document.getElementById("testimonials");
+    container.innerHTML = items.map(renderItem).join("");
+  }
+
+  function renderItem(e) {
+    const name = e.student_name || "";
+    const head = e.heading || "";
+    const body = e.body || "";
+    const photo = e.photo || "";
+    const muxId = e.mux_video_id || "";
+    const thumb = e.mux_thumbnail || "";
+
+    const avatar = photo
+      ? `<div class="testimonial-avatar"><img src="${photo}" /></div>`
+      : `<div class="testimonial-avatar">${name.charAt(0)}</div>`;
+
+    const video = muxId && thumb
+      ? `<div class="thumbnail" onclick="openMuxLightbox('${muxId}')">
+           <img src="${thumb}" loading="lazy">
+           <button class="play-btn">▶</button>
+         </div>`
+      : "";
+
+    return `
+      <div class="testimonial-card">
+        ${avatar}
+        ${video}
+        <div class="testimonial-content">
+          ${head ? `<h4>${head}</h4>` : ""}
+          ${body ? `<p>${body}</p>` : ""}
+          ${name ? `<p class="author">– ${name}</p>` : ""}
+        </div>
+      </div>`;
+  }
+
+  document.addEventListener("DOMContentLoaded", fetchTestimonials);
+</script>
+
+</body>
+</html>
